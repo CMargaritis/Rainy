@@ -70,8 +70,7 @@ weather_models = ["best_match", "ecmwf_ifs", "ecmwf_ifs025", "ecmwf_aifs025_sing
 
 # --- UI Layout and Styling ---
 
-def page(request: Request):
-    connect_ip = request.scope['client'][0]
+def page():
     # print(ip = client.environ['asgi.scope']['client'][0])
     # ui.query('body').style('background-color: #f0f0f0;')
     # ui.label('Hello from PyInstaller')
@@ -81,7 +80,7 @@ def page(request: Request):
         # ui.label('Rainy').classes('text-2xl font-bold text-center mb-4')
         ui.image('media/logo.png').classes('w-1/4 mx-auto')
         #get current city
-        url = f'http://ip-api.com/json/{connect_ip}'
+        url = f'http://ip-api.com/json/'
         r = requests.get(url)
         results = r.json()
 
