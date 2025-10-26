@@ -510,6 +510,8 @@ def page():
             },
             "yAxis": {
                 "type": 'value',
+                'min' : 0,
+                'max' : max(30,np.max(weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"] )),
                 "name": 'Precipitation Type',
                 "axisLabel": {"formatter": '{value} mm'},
             },
