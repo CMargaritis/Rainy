@@ -6,7 +6,7 @@ from retry_requests import retry
 import pandas as pd
 import numpy as np  # Import numpy for wind calculations
 import matplotlib.pyplot as plt
-from nicegui import ui, app, native 
+from nicegui import ui, app, native, Client
 from scipy.interpolate import RectBivariateSpline
 
 import matplotlib
@@ -69,8 +69,11 @@ weather_models = ["best_match", "ecmwf_ifs", "ecmwf_ifs025", "ecmwf_aifs025_sing
 
 # --- UI Layout and Styling ---
 
-def page():
-    ui.query('body').style('background-color: #f0f0f0;')
+async def page(client: Client):
+    await client.connected()
+    connect_ip = client.ip
+    # print(ip = client.environ['asgi.scope']['client'][0])
+    # ui.query('body').style('background-color: #f0f0f0;')
     # ui.label('Hello from PyInstaller')
 
     # ui.query('body').style('background-color: #f0f0f0;')
@@ -78,7 +81,7 @@ def page():
         # ui.label('Rainy').classes('text-2xl font-bold text-center mb-4')
         ui.image('media/logo.png').classes('w-1/4 mx-auto')
         #get current city
-        url = 'http://ip-api.com/json/'
+        url = f'http://ip-api.com/json/{connect_ip}'
         r = requests.get(url)
         results = r.json()
 
