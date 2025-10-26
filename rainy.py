@@ -413,7 +413,7 @@ def page():
                 {
                 "type": 'value',
                 'min' : 0,
-                'max' : max(30, np.max(weather_data["wind_speed_10m"]), weather_data["wind_gusts_10m"]),
+                'max' : max(30, np.max(weather_data["wind_speed_10m"]), np.max(weather_data["wind_gusts_10m"])),
                 "name": 'Wind Speed',
                 "axisLabel": {"formatter": '{value} m/s'},
                 },],
