@@ -12,7 +12,7 @@ from scipy.interpolate import RectBivariateSpline
 import matplotlib
 matplotlib.use("svg")
 
-app.add_static_files("/media","media\\")
+app.add_static_files("media","media")
 
 # --- Configuration ---
 # Setup the Open-Meteo API client with caching and retry on error
@@ -767,4 +767,4 @@ def page():
     generate_charts()
 
 # --- Run the App ---
-ui.run(page,title="Rainy",port=native.find_open_port(), reload=False)
+ui.run(page,title="Rainy",port=8080, reload=False)
