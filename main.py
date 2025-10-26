@@ -763,6 +763,8 @@ def page():
         else:
             ui.notify("No weather data available for the selected criteria.", color='warning')
 
-# --- Run the App ---
+
     generate_charts()
+
+# --- Run the App ---
 ui.run(page,title="Rainy",port=native.find_open_port(), reload=False)
