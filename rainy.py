@@ -71,7 +71,7 @@ weather_models = ["best_match", "ecmwf_ifs", "ecmwf_ifs025", "ecmwf_aifs025_sing
 
 async def page(client: Client):
     await client.connected()
-    connect_ip = client.ip
+    connect_ip = client.environ['asgi.scope']['client'][0]
     print(connect_ip)
     # print(ip = client.environ['asgi.scope']['client'][0])
     # ui.query('body').style('background-color: #f0f0f0;')
