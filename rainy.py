@@ -6,8 +6,9 @@ from retry_requests import retry
 import pandas as pd
 import numpy as np  # Import numpy for wind calculations
 import matplotlib.pyplot as plt
-from nicegui import ui, app, native, Client, Request
+from nicegui import ui, app, native, Client
 from scipy.interpolate import RectBivariateSpline
+from fastapi import Request
 
 import matplotlib
 matplotlib.use("svg")
