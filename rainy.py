@@ -79,13 +79,17 @@ def page():
     with ui.card().classes('w-full'):
         # ui.label('Rainy').classes('text-2xl font-bold text-center mb-4')
         ui.image('media/logo.png').classes('w-1/4 mx-auto')
-        #get current city
-        url = f'http://ip-api.com/json/'
-        r = requests.get(url)
-        results = r.json()
+        
+        
+        # #get current city
+        # url = f'http://ip-api.com/json/'
+        # r = requests.get(url)
+        # results = r.json()
+
+        city = app.storage.user.get('city',None)
 
         with ui.row().classes('w-full items-end'):
-            location_input = ui.input(label='Location', placeholder='e.g., Delft',value=f"{results["city"]}, {results["country"]}").classes('flex-grow')
+            location_input = ui.input(label='Location', placeholder='e.g., Delft',value=city).classes('flex-grow')
             
             model_select = ui.select(
                 weather_models,
@@ -821,6 +825,8 @@ def page():
         if lat is None or lon is None:
             ui.notify(f"Could not find coordinates for '{location}'. Please be more specific.", color='negative')
             return
+        else:
+            app.storage.user['city'] = location
 
         ui.notify(f"Found location: {found_name}. Fetching weather data...", color='info')
         weather_data, pl_data = get_weather_data(lat, lon, date, model)
@@ -845,4 +851,4 @@ def page():
     generate_charts()
 
 # --- Run the App ---
-ui.run(page,title="Rainy",port=8080, reload=True)
+ui.run(page,title="Rainy",port=8080, reload=False, storage_secret="lnleuvovewhro5237hgerG$%^U#TRvwebdobqb83e#")
