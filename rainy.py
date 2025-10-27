@@ -354,6 +354,7 @@ def page():
             "xAxis": {
                 "type": 'category',
                 "data": TIME_AXIS,
+                "boundaryGap": False,
             },
             "yAxis": {
                 "type": 'value',
@@ -384,6 +385,7 @@ def page():
             "xAxis": {
                 "type": 'category',
                 "data": TIME_AXIS,
+                "boundaryGap": False,
             },
             "yAxis": {
                 "type": 'value',
@@ -416,6 +418,7 @@ def page():
             "xAxis": {
                 "type": 'category',
                 "data": TIME_AXIS,
+                "boundaryGap": False,
             },
             "yAxis": [
                 {
@@ -492,6 +495,7 @@ def page():
             "xAxis": {
                 "type": 'category',
                 "data": TIME_AXIS,
+                "boundaryGap": False,
             },
             "yAxis": [
                 {
@@ -527,6 +531,7 @@ def page():
             "xAxis": {
                 "type": 'category',
                 "data": TIME_AXIS,
+                "boundaryGap": False,
             },
             "yAxis": {
                 "type": 'value',
@@ -555,6 +560,7 @@ def page():
             "xAxis": {
                 "type": 'category',
                 "data": TIME_AXIS,
+                "boundaryGap": False,
             },
             "yAxis": {
                 "type": 'value',
@@ -666,6 +672,7 @@ def page():
             "xAxis": {
                 "type": 'category',
                 "data": TIME_AXIS,
+                "boundaryGap": False,
             },
             "yAxis": {
                 "type": 'value',
@@ -710,6 +717,7 @@ def page():
             "xAxis": {
                 "type": 'category',
                 "data": TIME_AXIS,
+                "boundaryGap": False,
             },
             "yAxis": {
                 "type": 'value',
