@@ -426,6 +426,45 @@ def page():
                     "yAxisIndex": 0,
                     "data": [round(x,1) for x in weather_data["wind_speed_10m"]],
                     'smooth': True,
+                    "markArea": {
+                        "silent": True,
+                        "data": [
+                            [
+                                {
+                                    "yAxis": 0,
+                                    "itemStyle": {
+                                        "color": 'rgba(0, 175, 255, 0.2)'
+                                    }
+                                },
+                                {
+                                    "yAxis": 10
+                                }
+                            ],
+                            [
+                                {
+                                    "yAxis": 10,
+                                    "itemStyle": {
+                                        "color": 'rgba(255, 255, 0, 0.2)'
+                                    }
+                                },
+                                {
+                                    "yAxis": 20
+                                }
+                            ],
+                            [
+                                {
+                                    "yAxis": 20,
+                                    "itemStyle": {
+                                        "color": 'rgba(255, 123, 40, 0.2)'
+                                    }
+                                },
+                                {
+                                    # This will extend to the top of the chart
+                                    "yAxis": max(30, np.max(weather_data["wind_speed_10m"]), np.max(weather_data["wind_gusts_10m"]))
+                                }
+                            ]
+                        ]
+                    }
                 },
                 {
                     "name": 'Wind Gusts',
@@ -497,11 +536,10 @@ def page():
                 },
             ]
         })
-        
+                
         ui.echart({
             "tooltip": {
                 "trigger": 'axis',
-                
             },
             "legend": {
                 "data": ["Rain", "Showers", "Snowfall", "Total"],
@@ -512,8 +550,8 @@ def page():
             },
             "yAxis": {
                 "type": 'value',
-                'min' : 0,
-                'max' : max(30,np.max(weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"] )),
+                'min': 0,
+                'max': max(30, np.max(weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"])),
                 "name": 'Precipitation Type',
                 "axisLabel": {"formatter": '{value} mm'},
             },
@@ -523,15 +561,55 @@ def page():
                     "type": 'line',
                     'stack': 'Total',
                     'areaStyle': {},
-                    "data": [round(x,1) for x in weather_data["rain"]],
+                    "data": [round(x, 1) for x in weather_data["rain"]],
                     'smooth': True,
+                    # Add markArea to the first series
+                    "markArea": {
+                        "silent": True,
+                        "data": [
+                            [
+                                {
+                                    "yAxis": 0,
+                                    "itemStyle": {
+                                        "color": 'rgba(0, 175, 255, 0.2)'
+                                    }
+                                },
+                                {
+                                    "yAxis": 10
+                                }
+                            ],
+                            [
+                                {
+                                    "yAxis": 10,
+                                    "itemStyle": {
+                                        "color": 'rgba(255, 255, 0, 0.2)'
+                                    }
+                                },
+                                {
+                                    "yAxis": 20
+                                }
+                            ],
+                            [
+                                {
+                                    "yAxis": 20,
+                                    "itemStyle": {
+                                        "color": 'rgba(255, 123, 40, 0.2)'
+                                    }
+                                },
+                                {
+                                    # This will extend to the top of the chart
+                                    "yAxis": max(30, np.max(weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"]))
+                                }
+                            ]
+                        ]
+                    }
                 },
                 {
                     "name": 'Showers',
                     "type": 'line',
                     'stack': 'Total',
                     'areaStyle': {},
-                    "data": [round(x,1) for x in weather_data["showers"]],
+                    "data": [round(x, 1) for x in weather_data["showers"]],
                     'smooth': True,
                 },
                 {
@@ -539,16 +617,10 @@ def page():
                     "type": 'line',
                     'stack': 'Total',
                     'areaStyle': {},
-                    "data": [round(x,1) for x in weather_data["snowfall"]],
+                    "data": [round(x, 1) for x in weather_data["snowfall"]],
                     'smooth': True,
                 },
-                # {
-                #     "name": 'Total',
-                #     "type": 'line',
-                #     "data": list(weather_data["precipitation"]),
-                #     'smooth': True,
-                # },
-            ]
+            ],
         })
         
     def create_clouds(weather_data, pl_data):
@@ -773,4 +845,4 @@ def page():
     generate_charts()
 
 # --- Run the App ---
-ui.run(page,title="Rainy",port=8080, reload=False)
+ui.run(page,title="Rainy",port=8080, reload=True)
