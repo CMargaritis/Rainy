@@ -87,13 +87,14 @@ def page():
         # results = r.json()
 
         city = app.storage.user.get('city',None)
+        stored_model = app.storage.user.get('model',weather_models[0])
 
         with ui.row().classes('w-full items-end'):
             location_input = ui.input(label='Location', placeholder='e.g., Delft',value=city).classes('flex-grow')
             
             model_select = ui.select(
                 weather_models,
-                value=weather_models[0],
+                value=stored_model,
                 label='Weather Model'
             ).classes('w-48')
             
@@ -332,7 +333,10 @@ def page():
                 pl_data["wind_direction"][j,:] = np.round(hourly.Variables(i+2).ValuesAsNumpy(),0)
                 pl_data["cloud_cover"   ][j,:] = np.round(hourly.Variables(i+3).ValuesAsNumpy(),0)
                 j += 1
+            
+            app.storage.user['model'] = model
             return pd.DataFrame(data=hourly_data), pl_data
+        
         except Exception as e:
             ui.notify(f"Failed to get weather data: {e}", color='negative')
             return None, None
@@ -555,9 +559,9 @@ def page():
             "yAxis": {
                 "type": 'value',
                 'min': 0,
-                'max': max(30, np.max(weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"])),
+                'max': max(10, np.max(weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"])),
                 "name": 'Precipitation Type',
-                "axisLabel": {"formatter": '{value} mm'},
+                "axisLabel": {"formatter": '{value} mm/h'},
             },
             "series": [
                 {
@@ -579,30 +583,30 @@ def page():
                                     }
                                 },
                                 {
-                                    "yAxis": 10
+                                    "yAxis": 3
                                 }
                             ],
                             [
                                 {
-                                    "yAxis": 10,
+                                    "yAxis": 3,
                                     "itemStyle": {
                                         "color": 'rgba(255, 255, 0, 0.2)'
                                     }
                                 },
                                 {
-                                    "yAxis": 20
+                                    "yAxis": 6
                                 }
                             ],
                             [
                                 {
-                                    "yAxis": 20,
+                                    "yAxis": 6,
                                     "itemStyle": {
                                         "color": 'rgba(255, 123, 40, 0.2)'
                                     }
                                 },
                                 {
                                     # This will extend to the top of the chart
-                                    "yAxis": max(30, np.max(weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"]))
+                                    "yAxis": max(10, np.max(weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"]))
                                 }
                             ]
                         ]
