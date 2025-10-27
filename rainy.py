@@ -70,25 +70,48 @@ weather_models = ["best_match", "ecmwf_ifs", "ecmwf_ifs025", "ecmwf_aifs025_sing
 
 # --- UI Layout and Styling ---
 
-def page():
+async def page():
     # print(ip = client.environ['asgi.scope']['client'][0])
     # ui.query('body').style('background-color: #f0f0f0;')
     # ui.label('Hello from PyInstaller')
 
     # ui.query('body').style('background-color: #f0f0f0;')
+    
+    
+    def set_cookie(key,value):
+        js = f'document.cookie = "{key}={value}; path=/; SameSite=Lax;"'
+        ui.run_javascript(js)
+        
+    async def get_cookie(key):
+        """Asynchronously gets a cookie value from the browser."""
+        js_code = f"""
+                    (function() {{
+                        const value = document.cookie
+                            .split('; ')
+                            .find(row => row.startsWith('{key}='))
+                            ?.split('=')[1];
+                        return value;
+                    }})();
+                    """
+        cookie_value = await ui.run_javascript(js_code)
+        # The result can be None if the cookie isn't found
+        return cookie_value
+        
+   
     with ui.card().classes('w-full'):
         # ui.label('Rainy').classes('text-2xl font-bold text-center mb-4')
         ui.image('media/logo.png').classes('w-1/4 mx-auto')
-        
         
         # #get current city
         # url = f'http://ip-api.com/json/'
         # r = requests.get(url)
         # results = r.json()
 
-        city = app.storage.user.get('city',None)
-        stored_model = app.storage.user.get('model',weather_models[0])
-
+        city         = await get_cookie('city' )  #app.storage.user.get('city',None)
+        stored_model = await get_cookie('model')  #app.storage.user.get('model',weather_models[0])
+        
+        if stored_model is None: stored_model = weather_models[0]
+        
         with ui.row().classes('w-full items-end'):
             location_input = ui.input(label='Location', placeholder='e.g., Delft',value=city).classes('flex-grow')
             
@@ -334,7 +357,7 @@ def page():
                 pl_data["cloud_cover"   ][j,:] = np.round(hourly.Variables(i+3).ValuesAsNumpy(),0)
                 j += 1
             
-            app.storage.user['model'] = model
+            set_cookie('model',model) #app.storage.user['model'] = model
             return pd.DataFrame(data=hourly_data), pl_data
         
         except Exception as e:
@@ -856,7 +879,8 @@ def page():
             ui.notify(f"Could not find coordinates for '{location}'. Please be more specific.", color='negative')
             return
         else:
-            app.storage.user['city'] = location
+            #app.storage.user['city'] = location
+            set_cookie('city',location)
 
         ui.notify(f"Found location: {found_name}. Fetching weather data...", color='info')
         weather_data, pl_data = get_weather_data(lat, lon, date, model)
