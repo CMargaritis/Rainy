@@ -571,6 +571,10 @@ def page():
                     'areaStyle': {},
                     "data": [round(x, 1) for x in weather_data["rain"]],
                     'smooth': True,
+                    "lineStyle": {
+                        "width": 0,
+                    },
+                    "symbol": 'none',
                     # Add markArea to the first series
                     "markArea": {
                         "silent": True,
@@ -619,13 +623,27 @@ def page():
                     'areaStyle': {},
                     "data": [round(x, 1) for x in weather_data["showers"]],
                     'smooth': True,
+                    "lineStyle": {
+                        "width": 0,
+                    },
+                    "symbol": 'none',
                 },
                 {
                     "name": 'Snowfall',
                     "type": 'line',
                     'stack': 'Total',
                     'areaStyle': {},
+                    "lineStyle": {
+                        "width": 0,
+                    },
                     "data": [round(x, 1) for x in weather_data["snowfall"]],
+                    'smooth': True,
+                    "symbol": 'none',
+                },
+                {
+                    "name": 'Total',
+                    "type": 'line',
+                    "data": [round(x, 1) for x in weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"]],
                     'smooth': True,
                 },
             ],
@@ -874,7 +892,7 @@ ui.run(
     page,
     title="Rainy",
     port=8080, 
-    reload=True, 
+    reload=False, 
     storage_secret="z%3T5Kjwhu&zVQK**Uq%Hhd5C2LKG93F7u7BhYXU",
     favicon="media/favicon.png"
     )
