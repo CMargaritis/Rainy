@@ -839,12 +839,27 @@ def page():
             # Clear previous plots before adding new ones
             plot_container.clear()
             with plot_container:
-                create_temperature_plots(weather_data, pl_data)
-                create_wind(weather_data,pl_data)
-                create_precipitation(weather_data,pl_data)
-                create_clouds(weather_data,pl_data)
-                create_airchart(weather_data,pl_data)
+                try:
+                    create_temperature_plots(weather_data, pl_data)
+                except Exception as e:
+                    pass
                 
+                try:
+                    create_wind(weather_data,pl_data)
+                except Exception as e:
+                    pass
+                try:
+                    create_precipitation(weather_data,pl_data)
+                except Exception as e:
+                    pass
+                try:
+                    create_clouds(weather_data,pl_data)
+                except Exception as e:
+                    pass
+                try:
+                    create_airchart(weather_data,pl_data)
+                except Exception as e:
+                    pass
                 
                 
             ui.notify("Charts generated successfully!", color='positive')
@@ -859,7 +874,7 @@ ui.run(
     page,
     title="Rainy",
     port=8080, 
-    reload=False, 
+    reload=True, 
     storage_secret="z%3T5Kjwhu&zVQK**Uq%Hhd5C2LKG93F7u7BhYXU",
     favicon="media/favicon.png"
     )
