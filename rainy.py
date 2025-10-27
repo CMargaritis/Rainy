@@ -65,7 +65,7 @@ TIME_AXIS = ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:
 
 weather_models = ["best_match", "ecmwf_ifs", "ecmwf_ifs025", "ecmwf_aifs025_single", "cma_grapes_global", "bom_access_global", "kma_seamless", "kma_ldps", "kma_gdps", "meteofrance_seamless", "meteofrance_arpege_world", "meteofrance_arpege_europe", "meteofrance_arome_france", "meteofrance_arome_france_hd", "knmi_seamless", "knmi_harmonie_arome_europe", "knmi_harmonie_arome_netherlands", "dmi_seamless", "dmi_harmonie_arome_europe", "gfs_seamless", "gfs_global", "gfs_hrrr", "ncep_nbm_conus", "ncep_nam_conus", "gfs_graphcast025", "icon_seamless", "icon_global", "icon_eu", "icon_d2", "italia_meteo_arpae_icon_2i", "ukmo_seamless", "ukmo_global_deterministic_10km", "ukmo_uk_deterministic_2km", "jma_seamless", "jma_msm", "jma_gsm", "gem_seamless", "gem_global", "gem_regional", "gem_hrdps_continental", "metno_seamless", "metno_nordic", "meteoswiss_icon_seamless", "meteoswiss_icon_ch1", "meteoswiss_icon_ch2"]
     
-
+spline_tension = 0.4
 
 
 # --- UI Layout and Styling ---
@@ -109,7 +109,7 @@ async def page():
 
         city         = await get_cookie('city' )  #app.storage.user.get('city',None)
         stored_model = await get_cookie('model')  #app.storage.user.get('model',weather_models[0])
-        
+
         if stored_model is None: stored_model = weather_models[0]
         
         with ui.row().classes('w-full items-end'):
@@ -389,13 +389,13 @@ async def page():
                     "name": 'Actual',
                     "type": 'line',
                     "data": [round(x,1) for x in weather_data["temperature_2m"]],
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
                 {
                     "name": 'Apparent',
                     "type": 'line',
                     "data": [round(x,1) for x in weather_data["apparent_temperature"]],
-                    'smooth': True,
+                    'smooth': spline_tension,
                 }
             ]
         })
@@ -422,7 +422,7 @@ async def page():
                     "name": 'Relative Humidity',
                     "type": 'line',
                     "data": list(weather_data["relative_humidity_2m"]),
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
             ]
         })
@@ -459,7 +459,7 @@ async def page():
                     "type": 'line',
                     "yAxisIndex": 0,
                     "data": [round(x,1) for x in weather_data["wind_speed_10m"]],
-                    'smooth': True,
+                    'smooth': spline_tension,
                     "markArea": {
                         "silent": True,
                         "data": [
@@ -505,7 +505,7 @@ async def page():
                     "type": 'line',
                     "yAxisIndex": 0,
                     "data": [round(x,1) for x in weather_data["wind_gusts_10m"]],
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
             ]
         })
@@ -538,7 +538,7 @@ async def page():
                     "name": 'Wind Direction',
                     "type": 'line',
                     "data": list(weather_data["wind_direction_10m"]),
-                    'smooth': True,
+                    'smooth': spline_tension,
                 }
             ]
         })
@@ -568,7 +568,7 @@ async def page():
                     "name": 'Precipitation Probability',
                     "type": 'line',
                     "data": list(weather_data["precipitation_probability"]),
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
             ]
         })
@@ -599,7 +599,7 @@ async def page():
                     'stack': 'Total',
                     'areaStyle': {},
                     "data": [round(x, 1) for x in weather_data["rain"]],
-                    'smooth': True,
+                    'smooth': spline_tension,
                     "lineStyle": {
                         "width": 0,
                     },
@@ -651,7 +651,7 @@ async def page():
                     'stack': 'Total',
                     'areaStyle': {},
                     "data": [round(x, 1) for x in weather_data["showers"]],
-                    'smooth': True,
+                    'smooth': spline_tension,
                     "lineStyle": {
                         "width": 0,
                     },
@@ -666,14 +666,14 @@ async def page():
                         "width": 0,
                     },
                     "data": [round(x, 1) for x in weather_data["snowfall"]],
-                    'smooth': True,
+                    'smooth': spline_tension,
                     "symbol": 'none',
                 },
                 {
                     "name": 'Total',
                     "type": 'line',
                     "data": [round(x, 1) for x in weather_data["rain"] + weather_data["showers"] + weather_data["snowfall"]],
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
             ],
         })
@@ -709,25 +709,25 @@ async def page():
                     "name": 'Low',
                     "type": 'line',
                     "data": list(weather_data["cloud_cover_low"]),
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
                 {
                     "name": 'Mid',
                     "type": 'line',
                     "data": list(weather_data["cloud_cover_mid"]),
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
                 {
                     "name": 'High',
                     "type": 'line',
                     "data": list(weather_data["cloud_cover_high"]),
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
                 {
                     "name": 'Total',
                     "type": 'line',
                     "data": list(weather_data["cloud_cover"]),
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
             ]
         })
@@ -752,7 +752,7 @@ async def page():
                     "name": 'Visibility',
                     "type": 'line',
                     "data": list(weather_data["visibility"]),
-                    'smooth': True,
+                    'smooth': spline_tension,
                 },
             ]
         })
