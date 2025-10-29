@@ -920,8 +920,19 @@ async def page():
     generate_charts()
 
      # Add a footer to the page
-    with ui.footer(fixed=False).classes('text-center p-2'):
-        ui.label('Weather data by Open-Meteo.com')
+    with ui.footer(fixed=False).classes('bg-white text-black p-4'):
+        # Use a 3-column grid to position the elements
+        # 'w-full' makes the grid take the full width of the footer
+        with ui.grid(columns=2).classes('w-full items-center'):
+            
+            
+            # The centered link in the second column
+            ui.markdown('Weather data by [open-meteo.com](https://open-meteo.com)') \
+                .classes('text-left')
+
+            # The right-aligned link in the third column
+            ui.markdown('Made by [cmargaritis.com](https://cmargaritis.com)') \
+                .classes('text-right')
 # --- Run the App ---
 ui.run(
     page,
