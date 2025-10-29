@@ -919,6 +919,9 @@ async def page():
 
     generate_charts()
 
+     # Add a footer to the page
+    with ui.footer(fixed=False).classes('text-center p-2'):
+        ui.label('Weather data by Open-Meteo.com')
 # --- Run the App ---
 ui.run(
     page,
