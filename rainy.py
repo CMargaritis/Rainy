@@ -78,8 +78,8 @@ async def page():
     # ui.query('body').style('background-color: #f0f0f0;')
     
     
-    def set_cookie(key,value):
-        js = f'document.cookie = "{key}={value}; path=/; SameSite=Lax;"'
+    def set_cookie(key,value,expire=365*24*3600):
+        js = f'document.cookie = "{key}={value}; max-age={expire}; path=/; SameSite=Lax;"'
         ui.run_javascript(js)
         
     async def get_cookie(key):
