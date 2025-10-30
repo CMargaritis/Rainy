@@ -701,35 +701,59 @@ async def page():
                 "type": 'value',
                 'min': 0,
                 'max': 100,
-                "name": 'Cloud Cover Type',
+                "name": 'Total Cloud Coverage',
                 "axisLabel": {"formatter": '{value} %'},
             },
             "series": [
                 {
-                    "name": 'Low',
-                    "type": 'line',
-                    "data": list(weather_data["cloud_cover_low"]),
-                    'smooth': spline_tension,
-                },
-                {
-                    "name": 'Mid',
-                    "type": 'line',
-                    "data": list(weather_data["cloud_cover_mid"]),
-                    'smooth': spline_tension,
-                },
-                {
-                    "name": 'High',
-                    "type": 'line',
-                    "data": list(weather_data["cloud_cover_high"]),
-                    'smooth': spline_tension,
-                },
-                {
-                    "name": 'Total',
                     "type": 'line',
                     "data": list(weather_data["cloud_cover"]),
                     'smooth': spline_tension,
                 },
             ]
+        })
+        
+        ui.echart({
+            "tooltip": {
+                'position': 'top',
+                'axisPointer': {
+                    'type': 'cross',
+                    'crossStyle': {
+                        'color': '#999'
+                    }
+                }
+                
+            },
+            "xAxis": {
+                "type": 'category',
+                "data": TIME_AXIS,
+            },
+            "yAxis": {
+                "type": 'category',
+                "data": PRESSURE_LEVELS_EXPLAINED,
+                "name": 'Cloud Coverage by Pressure Level in %',
+                'axisLabel': {
+                    'fontFamily': 'monospace' 
+                }
+                
+            },
+            'visualMap': {
+                'min': 0,
+                'max': 100,
+                'calculable': 'true',
+                'realtime': 'false',
+                'inRange': {
+                'color': ['#FFFFFF', '#333333']
+                },
+                'orient': 'horizontal',
+                'left': 'center',
+                # 'bottom': '0%',
+            },
+            'series': {
+                'type' : 'heatmap',
+                'data' : numpy_to_echart_heatmap_data_with_interpolation_native(pl_data["cloud_cover"])
+            }
+            
         })
         
         ui.echart({
@@ -759,48 +783,7 @@ async def page():
         
         
         # clouds_high_res, (new_width, new_height) = upsample_and_interpolate(pl_data["cloud_cover"],10)
-        ui.echart({
-            "tooltip": {
-                'position': 'top',
-                'axisPointer': {
-                    'type': 'cross',
-                    'crossStyle': {
-                        'color': '#999'
-                    }
-                }
-                
-            },
-            "xAxis": {
-                "type": 'category',
-                "data": TIME_AXIS,
-            },
-            "yAxis": {
-                "type": 'category',
-                "data": PRESSURE_LEVELS_EXPLAINED,
-                "name": 'Cloud Cover %',
-                'axisLabel': {
-                    'fontFamily': 'monospace' 
-                }
-                
-            },
-            'visualMap': {
-                'min': 0,
-                'max': 100,
-                'calculable': 'true',
-                'realtime': 'false',
-                'inRange': {
-                'color': ['#FFFFFF', '#333333']
-                },
-                'orient': 'horizontal',
-                'left': 'center',
-                # 'bottom': '0%',
-            },
-            'series': {
-                'type' : 'heatmap',
-                'data' : numpy_to_echart_heatmap_data_with_interpolation_native(pl_data["cloud_cover"])
-            }
-            
-        })
+
     
     
     def create_airchart(weather_date, pl_data):
