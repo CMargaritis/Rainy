@@ -134,6 +134,7 @@ async def page():
         # print(date.value)
         # print(date_input.value)
         generate_button = ui.button('Reload Charts', on_click=lambda: generate_charts())
+        
 
         plot_container = ui.row().classes('w-full justify-center')
 
@@ -276,93 +277,148 @@ async def page():
         return resampled_array
 
 
-    def geocode_location(location_name):
+    async def geocode_location(location_name):
         """Geocode a location name using the free Open-Meteo Geocoding API."""
-        url = "https://geocoding-api.open-meteo.com/v1/search"
-        params = {"name": location_name, "count": 1}
+
         try:
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            results = response.json()
-            if "results" in results and len(results["results"]) > 0:
-                location = results["results"][0]
-                return location["latitude"], location["longitude"], location.get("name", "")
-        except requests.exceptions.RequestException as e:
-            ui.notify(f"Geocoding request failed: {e}", color='negative')
+            js_code = f"""
+            
+                const url = `https://geocoding-api.open-meteo.com/v1/search?name={location_name}&count=1&language=en&format=json`;
+
+                try {{
+                    const response = await fetch(url);
+                    if (!response.ok) {{
+                        throw new Error(`HTTP error! status: ${{response.status}}`);
+                    }}
+                    const data = await response.json();
+                    return data;
+                }} catch (error) {{
+                    console.error("Failed to get geolocation data:", error);
+                    return null;
+                }}
+               
+            """
+            response = await ui.run_javascript(js_code,timeout=10)
+            return response["results"][0]["latitude"], response["results"][0]["longitude"], response["results"][0]["name"]
+            
         except Exception as e:
-            ui.notify(f"An error occurred during geocoding: {e}", color='negative')
-        return None, None, None
-
-    def get_weather_data(latitude, longitude, date, model):
-        """Fetch weather data from Open-Meteo API, including cloud cover and snowfall."""
-        url = "https://api.open-meteo.com/v1/forecast"
-        hourly_params = ["temperature_2m", "relative_humidity_2m", "apparent_temperature", "rain", "showers", "snowfall", "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m", "surface_pressure", "precipitation", "precipitation_probability", "cloud_cover_low", "cloud_cover", "cloud_cover_mid", "cloud_cover_high", "visibility",]
-        for p in PRESSURE_LEVELS:
-            hourly_params.extend([
-                f"temperature_{p}hPa",
-                f"wind_speed_{p}hPa",
-                f"wind_direction_{p}hPa",
-                f"cloud_cover_{p}hPa"
-            ])
-            
-        params = {
-            "latitude": latitude,
-            "longitude": longitude,
-            "start_date": date,
-            "end_date": date,
-            "hourly": hourly_params,
-            "models": model,
-            "timezone": "auto",
-            "wind_speed_unit": "ms",
-        }
-        try:
-            responses = openmeteo.weather_api(url, params=params)
-            response = responses[0]
-
-            hourly = response.Hourly()
-            hourly_data = {
-                "date": pd.to_datetime(hourly.Time(), unit="s", utc=True),
-                "temperature_2m":            hourly.Variables( 0).ValuesAsNumpy(),
-                "relative_humidity_2m":      hourly.Variables( 1).ValuesAsNumpy(),
-                "apparent_temperature":      hourly.Variables( 2).ValuesAsNumpy(),
-                "rain":                      hourly.Variables( 3).ValuesAsNumpy(),
-                "showers":                   hourly.Variables( 4).ValuesAsNumpy(),
-                "snowfall":                  hourly.Variables( 5).ValuesAsNumpy()*10,
-                "wind_speed_10m":            hourly.Variables( 6).ValuesAsNumpy(),
-                "wind_direction_10m":        hourly.Variables( 7).ValuesAsNumpy(),
-                "wind_gusts_10m":            hourly.Variables( 8).ValuesAsNumpy(),
-                "surface_pressure":          hourly.Variables( 9).ValuesAsNumpy(),
-                "precipitation":             hourly.Variables(10).ValuesAsNumpy(),
-                "precipitation_probability": hourly.Variables(11).ValuesAsNumpy(),
-                "cloud_cover_low":           hourly.Variables(12).ValuesAsNumpy(),
-                "cloud_cover":               hourly.Variables(13).ValuesAsNumpy(),
-                "cloud_cover_mid":           hourly.Variables(14).ValuesAsNumpy(),
-                "cloud_cover_high":          hourly.Variables(15).ValuesAsNumpy(),
-                "visibility":                hourly.Variables(16).ValuesAsNumpy(),
-                
-            }
-            
-            pl_data = {
-                "temperature"    : np.zeros((len(PRESSURE_LEVELS),24)),
-                "wind_speed"     : np.zeros((len(PRESSURE_LEVELS),24)),
-                "wind_direction" : np.zeros((len(PRESSURE_LEVELS),24)),
-                "cloud_cover"    : np.zeros((len(PRESSURE_LEVELS),24)),
-            }
-            
-            j = 0
-            for i in range(17,len(hourly_params),4):
-                pl_data["temperature"   ][j,:] = np.round(hourly.Variables(i  ).ValuesAsNumpy(),0)
-                pl_data["wind_speed"    ][j,:] = np.round(hourly.Variables(i+1).ValuesAsNumpy(),0)
-                pl_data["wind_direction"][j,:] = np.round(hourly.Variables(i+2).ValuesAsNumpy(),0)
-                pl_data["cloud_cover"   ][j,:] = np.round(hourly.Variables(i+3).ValuesAsNumpy(),0)
-                j += 1
-            
-            set_cookie('model',model) #app.storage.user['model'] = model
-            return pd.DataFrame(data=hourly_data), pl_data
+            # ui.notify(f"An error occurred while performing geolocation: {e}", color='negative')
+            return None, None, None
         
+        
+    async def fetch_weather_client_side(latitude, longitude, date, model):
+        """
+        Triggers the client-side JavaScript function to fetch weather data
+        and displays the result.
+        """
+        try:
+            js_code = f"""
+                async function getWeatherData(latitude, longitude, date, model) {{
+                    const baseUrl = "https://api.open-meteo.com/v1/forecast";
+                    const hourlyParams = [
+                        "temperature_2m", "relative_humidity_2m", "apparent_temperature", "rain",
+                        "showers", "snowfall", "wind_speed_10m", "wind_direction_10m",
+                        "wind_gusts_10m", "surface_pressure", "precipitation",
+                        "precipitation_probability", "cloud_cover_low", "cloud_cover",
+                        "cloud_cover_mid", "cloud_cover_high", "visibility"
+                    ];
+
+                    const pressureLevels = {PRESSURE_LEVELS};
+
+                    pressureLevels.forEach(p => {{
+                        hourlyParams.push(
+                            `temperature_${{p}}hPa`,
+                            `wind_speed_${{p}}hPa`,
+                            `wind_direction_${{p}}hPa`,
+                            `cloud_cover_${{p}}hPa`
+                        );
+                    }});
+
+                    const params = new URLSearchParams({{
+                        latitude: latitude,
+                        longitude: longitude,
+                        start_date: date,
+                        end_date: date,
+                        hourly: hourlyParams.join(','),
+                        models: model,
+                        timezone: "auto",
+                        wind_speed_unit: "ms"
+                    }});
+
+                    const url = `${{baseUrl}}?${{params.toString()}}`;
+
+                    try {{
+                        const response = await fetch(url);
+                        if (!response.ok) {{
+                            throw new Error(`HTTP error! status: ${{response.status}}`);
+                        }}
+                        const data = await response.json();
+                        return data;
+                    }} catch (error) {{
+                        console.error("Failed to get weather data:", error);
+                        return null;
+                    }}
+                }}
+
+            // Example usage
+            const data = await getWeatherData({latitude}, {longitude}, '{date}', '{model}');
+            return data;
+            """
+            response = await ui.run_javascript(js_code,timeout=10)
+            
+            def handle_missing_data(data,length=24,return_value= np.nan):
+                try:
+                    a = np.asarray(data,dtype=np.float32)
+                    return a
+                except Exception:
+                    a = np.empty(length,dtype=np.float32)
+                    a[:] = return_value
+                    return a
+
+            if response:
+                hourly = response.get('hourly', {})
+                hourly_data = {
+                "temperature_2m":            handle_missing_data(hourly["temperature_2m"]),
+                "relative_humidity_2m":      handle_missing_data(hourly["relative_humidity_2m"]),
+                "apparent_temperature":      handle_missing_data(hourly["apparent_temperature"]),
+                "rain":                      handle_missing_data(hourly["rain"]),
+                "showers":                   handle_missing_data(hourly["showers"]),
+                "snowfall":                  handle_missing_data(hourly["snowfall"])*10,
+                "wind_speed_10m":            handle_missing_data(hourly["wind_speed_10m"]),
+                "wind_direction_10m":        handle_missing_data(hourly["wind_direction_10m"]),
+                "wind_gusts_10m":            handle_missing_data(hourly["wind_gusts_10m"]),
+                "surface_pressure":          handle_missing_data(hourly["surface_pressure"]),
+                "precipitation":             handle_missing_data(hourly["precipitation"]),
+                "precipitation_probability": handle_missing_data(hourly["precipitation_probability"]),
+                "cloud_cover_low":           handle_missing_data(hourly["cloud_cover_low"]),
+                "cloud_cover":               handle_missing_data(hourly["cloud_cover"]),
+                "cloud_cover_mid":           handle_missing_data(hourly["cloud_cover_mid"]),
+                "cloud_cover_high":          handle_missing_data(hourly["cloud_cover_high"]),
+                "visibility":                handle_missing_data(hourly["visibility"]),
+                
+                }
+                
+                pl_data = {
+                    "temperature"    : np.zeros((len(PRESSURE_LEVELS),24)),
+                    "wind_speed"     : np.zeros((len(PRESSURE_LEVELS),24)),
+                    "wind_direction" : np.zeros((len(PRESSURE_LEVELS),24)),
+                    "cloud_cover"    : np.zeros((len(PRESSURE_LEVELS),24)),
+                }
+                
+                for i,p in enumerate(PRESSURE_LEVELS):
+                    pl_data["temperature"   ][i,:] = np.round(handle_missing_data(hourly[f"temperature_{p}hPa"]    ,return_value=0),0)
+                    pl_data["wind_speed"    ][i,:] = np.round(handle_missing_data(hourly[f"wind_speed_{p}hPa"]     ,return_value=0),0)
+                    pl_data["wind_direction"][i,:] = np.round(handle_missing_data(hourly[f"wind_direction_{p}hPa"] ,return_value=0),0)
+                    pl_data["cloud_cover"   ][i,:] = np.round(handle_missing_data(hourly[f"cloud_cover_{p}hPa"]    ,return_value=0),0)
+                    
+                set_cookie('model',model) #app.storage.user['model'] = model
+                return pd.DataFrame(data=hourly_data), pl_data
+                
+            else:
+                ui.notify("Failed to get weather data from the client.", color='negative')
+
         except Exception as e:
-            ui.notify(f"Failed to get weather data: {e}", color='negative')
-            return None, None
+            ui.notify(f"An error occurred while fetching weather data: {e}", color='negative')
 
     def create_temperature_plots(weather_data, pl_data):
         ui.echart({
@@ -847,7 +903,7 @@ async def page():
             
 
 
-    def generate_charts():
+    async def generate_charts():
         """Main function to orchestrate geocoding, data fetching, and chart generation."""
         location = location_input.value
         date = date_input.value
@@ -857,7 +913,7 @@ async def page():
             ui.notify("Please enter a location.", color='warning')
             return
 
-        lat, lon, found_name = geocode_location(location)
+        lat, lon, found_name = await geocode_location(location)
         if lat is None or lon is None:
             ui.notify(f"Could not find coordinates for '{location}'. Please be more specific.", color='negative')
             return
@@ -866,7 +922,7 @@ async def page():
             set_cookie('city',location)
 
         ui.notify(f"Found location: {found_name}. Fetching weather data...", color='info')
-        weather_data, pl_data = get_weather_data(lat, lon, date, model)
+        weather_data, pl_data = await fetch_weather_client_side(lat, lon, date, model)
 
         if weather_data is not None:
             # Clear previous plots before adding new ones
@@ -900,7 +956,7 @@ async def page():
             ui.notify("No weather data available for the selected criteria.", color='warning')
 
 
-    generate_charts()
+    await generate_charts()
 
      # Add a footer to the page
     with ui.footer(fixed=False).classes('bg-white text-black p-4'):
