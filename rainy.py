@@ -978,6 +978,5 @@ ui.run(
     title="Rainy",
     port=8080, 
     reload=False, 
-    storage_secret="z%3T5Kjwhu&zVQK**Uq%Hhd5C2LKG93F7u7BhYXU",
     favicon="media/favicon.png"
     )
