@@ -1,8 +1,7 @@
-FROM zauberzeug/nicegui:latest
+FROM zauberzeug/nicegui:3.3.1
 WORKDIR /app
 COPY requirements.txt .
-RUN python -m pip install --upgrade pip setuptools wheel && python -m pip install --no-cache-dir -r requirements.txt
-RUN python -c "import importlib; importlib.import_module('openmeteo_requests'); print('openmeteo_requests import OK')"
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 EXPOSE 8080
 CMD ["python", "rainy.py"]
