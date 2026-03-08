@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import openmeteo_requests
 import requests_cache
@@ -109,12 +109,26 @@ async def page():
 
         city         = await get_cookie('city' )  #app.storage.user.get('city',None)
         stored_model = await get_cookie('model')  #app.storage.user.get('model',weather_models[0])
+        stored_lat   = await get_cookie('lat')
+        stored_lon   = await get_cookie('lon')
 
         if stored_model is None: stored_model = weather_models[0]
         
         with ui.row().classes('w-full items-end'):
-            location_input = ui.input(label='Location', placeholder='e.g., Delft',value=city).classes('flex-grow')
+            with ui.input(
+                label='Location',
+                placeholder='e.g., Delft',
+                value=city,
+                on_change=lambda e: update_suggestions(e.value)
+            ).classes('flex-grow') as location_input:
+                with ui.menu().props('no-parent-event no-focus') as autocomplete_menu:
+                    pass
             
+            lat_input = ui.input(label='Latitude',  placeholder='52.0116', value=stored_lat,
+                                 on_change=lambda e: _on_coord_change(e)).classes('w-32')
+            lon_input = ui.input(label='Longitude', placeholder='4.3571',  value=stored_lon,
+                                 on_change=lambda e: _on_coord_change(e)).classes('w-32')
+
             model_select = ui.select(
                 weather_models,
                 value=stored_model,
@@ -128,6 +142,9 @@ async def page():
                             ui.button('Close', on_click=menu.close).props('flat')
             with date_input.add_slot('append'):
                 ui.icon('edit_calendar').on('click', menu.open).classes('cursor-pointer')
+
+            ui.button('Today',    on_click=lambda: date_input.set_value(datetime.now().strftime('%Y-%m-%d'))).props('flat dense')
+            ui.button('Tomorrow', on_click=lambda: date_input.set_value((datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'))).props('flat dense')
             
             # date_input = ui.date(value=datetime.now().strftime('%Y-%m-%d'), on_change=lambda e: date_input.set_value(e.value)).props('flat')
 
@@ -305,6 +322,74 @@ async def page():
             # ui.notify(f"An error occurred while performing geolocation: {e}", color='negative')
             return None, None, None
         
+    _suppress_next  = [False]
+    _suppress_coord = [0]
+    _last_results   = []          # cache of the most recent autocomplete results
+
+    def _on_coord_change(e):
+        if _suppress_coord[0] > 0:
+            _suppress_coord[0] -= 1
+            return
+        if e.value:
+            location_input.set_value('')
+
+    def select_location(name, lat, lon):
+        _suppress_next[0]   = True
+        _suppress_coord[0] += 2          # suppress on_change for both lat and lon
+        location_input.set_value(name)
+        lat_input.set_value(str(round(lat, 6)))
+        lon_input.set_value(str(round(lon, 6)))
+        autocomplete_menu.close()
+
+    def on_location_blur():
+        """Auto-select the top suggestion when the user clicks away without picking one."""
+        if _last_results and not lat_input.value:
+            r = _last_results[0]
+            parts = [r['name']]
+            if r.get('admin1'):  parts.append(r['admin1'])
+            if r.get('country'): parts.append(r['country'])
+            select_location(', '.join(parts), r['latitude'], r['longitude'])
+
+    location_input.on('blur', lambda: on_location_blur())
+
+    async def update_suggestions(query: str):
+        if _suppress_next[0]:
+            _suppress_next[0] = False
+            return
+        # User is manually typing — clear potentially stale coordinates
+        lat_input.set_value('')
+        lon_input.set_value('')
+        _last_results.clear()
+        autocomplete_menu.clear()
+        if not query or len(query) < 2:
+            autocomplete_menu.close()
+            return
+        safe_query = query.replace('`', '').replace('"', '')
+        js_code = f"""
+            try {{
+                const resp = await fetch(
+                    `https://geocoding-api.open-meteo.com/v1/search?name={safe_query}&count=5&language=en&format=json`
+                );
+                return await resp.json();
+            }} catch (e) {{ return null; }}
+        """
+        data = await ui.run_javascript(js_code, timeout=10)
+        results = (data or {}).get('results', [])
+        _last_results.clear()
+        _last_results.extend(results)
+        autocomplete_menu.clear()
+        with autocomplete_menu:
+            for r in results:
+                parts = [r['name']]
+                if r.get('admin1'):  parts.append(r['admin1'])
+                if r.get('country'): parts.append(r['country'])
+                label = ', '.join(parts)
+                ui.menu_item(label, on_click=lambda r=r, lbl=label: select_location(lbl, r['latitude'], r['longitude']))
+        if results:
+            autocomplete_menu.open()
+        else:
+            autocomplete_menu.close()
+
         
     async def fetch_weather_client_side(latitude, longitude, date, model):
         """
@@ -909,17 +994,35 @@ async def page():
         date = date_input.value
         model = model_select.value
 
-        if not location:
-            ui.notify("Please enter a location.", color='warning')
+        # Use manually entered coordinates if both are provided
+        try:
+            manual_lat = float(lat_input.value) if lat_input.value else None
+            manual_lon = float(lon_input.value) if lon_input.value else None
+        except ValueError:
+            ui.notify("Invalid coordinates. Please enter numeric values for latitude and longitude.", color='negative')
             return
 
-        lat, lon, found_name = await geocode_location(location)
-        if lat is None or lon is None:
-            ui.notify(f"Could not find coordinates for '{location}'. Please be more specific.", color='negative')
-            return
+        if manual_lat is not None and manual_lon is not None:
+            lat, lon, found_name = manual_lat, manual_lon, location or f"{manual_lat}, {manual_lon}"
+            set_cookie('lat', str(manual_lat))
+            set_cookie('lon', str(manual_lon))
+            set_cookie('city', location)
         else:
-            #app.storage.user['city'] = location
-            set_cookie('city',location)
+            if not location:
+                ui.notify("Please enter a location or coordinates.", color='warning')
+                return
+            lat, lon, found_name = await geocode_location(location)
+            if lat is None or lon is None:
+                ui.notify(f"Could not find coordinates for '{location}'. Please be more specific.", color='negative')
+                return
+            set_cookie('city', found_name)
+            set_cookie('lat', '')
+            set_cookie('lon', '')
+            _suppress_next[0]  = True
+            _suppress_coord[0] += 2
+            location_input.set_value(found_name)
+            lat_input.set_value(str(round(lat, 6)))
+            lon_input.set_value(str(round(lon, 6)))
 
         ui.notify(f"Found location: {found_name}. Fetching weather data...", color='info')
         weather_data, pl_data = await fetch_weather_client_side(lat, lon, date, model)
